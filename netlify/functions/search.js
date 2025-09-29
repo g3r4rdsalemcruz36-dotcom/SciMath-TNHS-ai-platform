@@ -12,7 +12,16 @@ export async function handler(event, context) {
 
   try {
     const response = await fetch(url);
-    const data = await response.json();
+    const text = await response.text(); // Read raw response
+    console.log("SerpAPI response:", text); // For debugging
+
+    let data;
+    try {
+      data = JSON.parse(text); // Attempt to parse JSON
+    } catch (err) {
+      console.error("Failed to parse JSON:", err);
+      return { statusCode: 500, body: JSON.stringify({ error: "Invalid JSON from SerpAPI", raw: text }) };
+    }
 
     return {
       statusCode: 200,
