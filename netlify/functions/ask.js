@@ -1,34 +1,17 @@
-import OpenAI from "openai";
-
-export async function handler(event, context) {
+// ask.js
+export async function askQuestion(query) {
   try {
-    const { question } = JSON.parse(event.body || "{}");
+    const res = await fetch(`/.netlify/functions/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
 
-    if (!question) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ answer: "Please provide a question." }),
-      };
+    // Return first snippet if available
+    if (data.organic_results && data.organic_results.length > 0) {
+      return data.organic_results[0].snippet;
+    } else {
+      return "No answer found.";
     }
-
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_KEY });
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: question }],
-    });
-
-    const answer = response.choices[0].message.content;
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ answer }),
-    };
   } catch (err) {
-    console.error("Error in AI function:", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ answer: "⚠️ AI failed to respond." }),
-    };
+    console.error(err);
+    return "Error fetching answer.";
   }
 }
